@@ -61,7 +61,7 @@ var createAccount = function(email, password) {
 }
 
 var loginAccount = function(email, password) {
-	firebase.auth().signInWithEmailAndPassword(email, password).then(function(data) {
+	firebase.auth().signInWithEmailAndPassword(email + '@omg.com', password).then(function(data) {
 		$('#login').modal('hide');
 	}).catch(function(error) {
 		// Handle Errors here.

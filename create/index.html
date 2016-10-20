@@ -25,8 +25,8 @@
     <link rel="stylesheet" href="/css/main.css"/>
 <body>
     <div class="container">
-        <form id="create-user" autocomplete="off">
-            <input id="email" placeholder="Email...">
+        <form id="create-user" autocomplete="off" onsubmit="event.preventDefault(); tryLogin();">
+            <input id="email" placeholder="Username...">
             <br>
             <input id="password" type="password" placeholder="Password...">
             <br>

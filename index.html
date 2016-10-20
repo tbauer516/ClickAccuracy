@@ -32,23 +32,22 @@
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <!-- <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
-                    </button>
+                    </button> -->
                     <h4 class="modal-title">Please Login:</h4>
                 </div>
                 <div class="modal-body">
                     <form name="login" id="login-form" autocomplete="off" onsubmit="event.preventDefault(); tryLogin();">
-                        <input name="email" id="email" placeholder="Email...">
+                        <input class="form-control" name="email" id="email" placeholder="Username...">
                         <br>
-                        <input name="password" id="password" type="password" placeholder="Password...">
+                        <input class="form-control" name="password" id="password" type="password" placeholder="Password...">
                         <br>
-                        <button type="submit" class="btn btn-primary">Login</button>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Do not record results</button>
+                            <input type="submit" class="btn btn-primary" placeholder="Login">
+                        </div>
                     </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary" form="login">Login</button>
                 </div>
             </div><!-- /.modal-content -->
         </div><!-- /.modal-dialog -->
