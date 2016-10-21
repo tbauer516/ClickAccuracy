@@ -1,9 +1,12 @@
 'use strict';
 
+var username = '';
+
 $(document).ready(function() {
 	firebase.auth().onAuthStateChanged(function(user) {
 		if (user) {
 			// User is signed in.
+			username = user.email.split('@')[0];
 		} else {
 			// No user is signed in.
 			var options = {
@@ -78,16 +81,25 @@ var logoutAccount = function() {
 	});
 }
 
-var addResults = function(resultData) {
+var addResults = function(resultData, accuracyData, errorData) {
 
 	var newResultKey = resultsRef.push().key;
 
-	var updates = {};
-	updates['/results/' + newResultKey] = resultData;
-
-	return databaseRef.update(updates);
+	resultsRef.child(username).once('value').then(function(snapshot) {
+		var size = snapshot.numChildren();
+		
+		var updates = {};
+		updates[username + '/' + size] = {time: resultData, accuracy: accuracyData, errors: errorData};
+		return resultsRef.update(updates);
+	});
 }
 
+function updateCounter(amt) {
+	databseRef.child('/counts/' + username).transaction(function(currentValue) {
+		currentValue || (currentValue === 0); // can be null
+		return currentValue + amt;
+	});
+}
 
 var xscale = function(x) {
 	if (x >= 0 && x <= 100) {
@@ -111,6 +123,12 @@ var makeCircle = function(x, y) {
 	ctx.closePath();
 	ctx.strokeStyle = '#000000';
 	ctx.fillStyle = '#000000';
+	ctx.fill();
+	ctx.beginPath();
+	ctx.arc(xscale(x), yscale(y), radius / 10, 0, 2 * Math.PI);
+	ctx.closePath();
+	ctx.strokeStyle = '#FF0000';
+	ctx.fillStyle = '#FF0000';
 	ctx.fill();
 }
 
@@ -168,13 +186,16 @@ var circle = [50, 50];
 // makeCircle(circle[0], circle[1]);
 
 var times = [];
+var accuracy = [];
+var errors = {count: 0, distance: []};
 var timeBegin;
 var timeEnd;
 
 canvas.click(function(e) {
 	var x = e.pageX - parseInt(canvas.css('margin-left'));
 	var y = e.pageY - parseInt(canvas.css('margin-top'));
-	if ((Math.pow((x-xscale(circle[0])), 2) + Math.pow((y-yscale(circle[1])), 2)) < Math.pow(radius, 2)) {
+	var distance = Math.sqrt(Math.pow(x - xscale(circle[0]), 2) + Math.pow(y - yscale(circle[1]), 2));
+	if (distance < radius) {
 		if (start) {
 			removeBegin();
 		}
@@ -184,16 +205,19 @@ canvas.click(function(e) {
 		var diff = timeEnd - timeBegin;
 		if (!isNaN(diff)) {
 			times.push(diff);
+			accuracy.push(distance);
 		}
 		timeBegin = timeEnd;
 		if (index >= points.length) {
 			endTest();
-			console.log(times);
-			addResults(times);
+			addResults(times, accuracy, errors);
 		} else {
 			circle = points[index];
 			makeCircle(circle[0], circle[1]);
 		}
+	} else {
+		errors.count++;
+		errors.distance.push(distance - radius);
 	}
 });
 
