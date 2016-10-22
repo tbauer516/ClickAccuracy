@@ -1,7 +1,6 @@
 'use strict';
 
 var username = '';
-var data;
 
 $(document).ready(function() {
 	firebase.auth().onAuthStateChanged(function(user) {
@@ -60,8 +59,14 @@ var logoutAccount = function() {
 }
 
 var getData = function() {
-	resultsRef.child(username).once('value').then(function(snapshot) {
-		data = snapshot.val();
+	// resultsRef.child(username).once('value').then(function(snapshot) {
+	// 	data = snapshot.val();
+	// 	processData(data);
+	// });
+	var data = [];
+	resultsRef.child(username).on('child_added', function(snapshot) {
+		console.log(snapshot.val());
+		data.push(snapshot.val());
 		processData(data);
 	});
 }
@@ -73,6 +78,7 @@ var processData = function(data) {
 	for (var i = 0; i < data.length; i++) {
 		var timeValues = [];
 		var accuracyValues = [];
+		var distanceValues = [];
 		var errorValues = [];
 		for (var j = 0; j < data[i].time.length; j++) {
 			var item = {
@@ -88,12 +94,21 @@ var processData = function(data) {
 			};
 			accuracyValues.push(item);
 		}
-		for (var j = 0; j < data[i].errors.distance.length; j++) {
+		for (var j = 0; j < data[i].distance.length; j++) {
 			var item = {
 				click: j + 1,
-				error: data[i].errors.distance[j]
+				distance: data[i].distance[j]
 			};
-			errorValues.push(item);
+			distanceValues.push(item);
+		}
+		if (data[i].errors != undefined) {
+			for (var j = 0; j < data[i].errors.length; j++) {
+				var item = {
+					click: j + 1,
+					error: data[i].errors[j]
+				};
+				errorValues.push(item);
+			}	
 		}
 		newData.push({
 			id: i,
@@ -112,6 +127,7 @@ var lineGraph = function(chartID, data, dataset, x, y, ylabel) {
 
 	var chart = $(chartID);
 	chart.height(chart.innerWidth() * (9 / 16));
+	$(chartID + ' svg').remove();
 	var d3chart = d3.select(chartID);
 	var svg = d3chart.append('svg');
 	svg.attr('width', parseInt(d3chart.style('width')));
@@ -141,8 +157,6 @@ var lineGraph = function(chartID, data, dataset, x, y, ylabel) {
 		})
 	];
 
-	console.log(ydomain);
-
 	var xscale = d3.scaleLinear()
 		.domain(xdomain)
 		.range([0, width]);
@@ -154,46 +168,50 @@ var lineGraph = function(chartID, data, dataset, x, y, ylabel) {
 	var zscale = d3.scaleOrdinal(d3.schemeCategory10)
 		.domain(data.map(function(s) { return s.id; }));
 
-	// var getColor = function(d) {
-	// 	return d3.interpolateYlOrRd(d.id);
-	// }
+	var colorscale = d3.scaleLinear()
+		.domain([0, data.length - 1])//.domain(data.map(function(s) { return s.id; }))
+		.range([0, 0.85]);
+
+	var getColor = function(d) {
+		return d3.interpolateRainbow(colorscale(d));
+	}
 
 	var line = d3.line()
     	.curve(d3.curveBasis)
     	.x(function(d) { return xscale(d[x]); })
     	.y(function(d) { return yscale(d[y]); });
 
-	var legend = svg.append("g")
-		.attr("class", "legend")
-		.attr("x", width - 100)
-		.attr("y", 100)
-		.attr("height", 100)
-		.attr("width", 100);
+	var legend = svg.append('g')
+		.attr('class', 'legend')
+		.attr('x', width - 100)
+		.attr('y', 100)
+		.attr('height', 100)
+		.attr('width', 100);
 
 	legend.selectAll('g')
 		.data(data)
 	.enter().append('g')
 		.each(function(d, i) {
-			var xpos = width - 200;
+			var xpos = width - 100;
 			var ypos = 25;
 			var yoffset = 25
 			var g = d3.select(this);
-			g.append("rect")
-			.attr("x", xpos)
-			.attr("y", i * ypos + yoffset)
-			.attr("width", 10)
-			.attr("height", 10)
-			.style("fill", function(d) {
-				return zscale(d.id);
+			g.append('rect')
+			.attr('x', xpos)
+			.attr('y', i * ypos + yoffset)
+			.attr('width', 10)
+			.attr('height', 10)
+			.style('fill', function(d) {
+				return getColor(d.id);
 			});
 
-	g.append("text")
-		.attr("x", xpos + 15)
-		.attr("y", i * ypos + 10 + yoffset)
-		.attr("height",30)
-		.attr("width",100)
-		.style("fill", function(d) {
-			return zscale(d.id);
+	g.append('text')
+		.attr('x', xpos + 15)
+		.attr('y', i * ypos + 10 + yoffset)
+		.attr('height',30)
+		.attr('width',100)
+		.style('fill', function(d) {
+			return getColor(d.id);
 		})
 		.text(function(d) {
 			return 'Mean: ' + d3.mean(d[dataset], function(d) {
@@ -236,6 +254,6 @@ var lineGraph = function(chartID, data, dataset, x, y, ylabel) {
 		.attr('class', 'line')
 		.attr('d', function(d) { return line(d[dataset]); })
 		.style('stroke', function(d) {
-			return zscale(d.id);
+			return getColor(d.id);
 		});
 }

@@ -82,7 +82,7 @@ var logoutAccount = function() {
 	});
 }
 
-var addResults = function(resultData, accuracyData, errorData) {
+var addResults = function(resultData, accuracyData, distanceData, errorData) {
 
 	var newResultKey = resultsRef.push().key;
 
@@ -90,7 +90,7 @@ var addResults = function(resultData, accuracyData, errorData) {
 		var size = snapshot.val();
 		
 		var updates = {};
-		updates[username + '/' + size] = {time: resultData, accuracy: accuracyData, errors: errorData};
+		updates[username + '/' + size] = {time: resultData, accuracy: accuracyData, distance: distanceData, errors: errorData};
 		updateCount(1);
 		return resultsRef.update(updates);
 	});
@@ -184,20 +184,24 @@ var index = -1;
 var points = [[68, 0],[90, 50],[47, 50],[4, 77],[69, 76],[32, 72],[29, 46],[50, 66],[58, 49],[13, 16],[34, 53],[44, 26],[24, 22],[32, 73],[31, 7],[77, 59],[97, 80],[24, 20],[41, 42],[0, 8]];
 // points = [[68, 0]];
 
+var prevCircle;
 var circle = [50, 50];
 // makeCircle(circle[0], circle[1]);
 
 var times = [];
 var accuracy = [];
-var errors = {count: 0, distance: []};
+var distance = [];
+var errors = [];
 var timeBegin;
 var timeEnd;
 
 canvas.mousedown(function(e) {
 	var x = e.pageX - parseInt(canvas.css('margin-left'));
 	var y = e.pageY - parseInt(canvas.css('margin-top'));
-	var distance = Math.sqrt(Math.pow(x - xscale(circle[0]), 2) + Math.pow(y - yscale(circle[1]), 2));
-	if (distance < radius) {
+	var distFromCenter = Math.sqrt(Math.pow(x - xscale(circle[0]), 2) + Math.pow(y - yscale(circle[1]), 2));
+	
+	// if the click was on a circle
+	if (distFromCenter < radius) {
 		if (start) {
 			removeBegin();
 		}
@@ -205,21 +209,30 @@ canvas.mousedown(function(e) {
 		index++;
 		timeEnd = new Date().getTime();
 		var diff = timeEnd - timeBegin;
+
+		// if the circle clicked was not the first one
 		if (!isNaN(diff)) {
 			times.push(diff);
-			accuracy.push(distance);
+			accuracy.push(distFromCenter);
+			var distBetween = Math.sqrt(Math.pow(xscale(circle[0]) - xscale(prevCircle[0]), 2) + Math.pow(yscale(circle[1]) - yscale(prevCircle[1]), 2));
+			distance.push(distBetween);
 		}
+		prevCircle = circle;
 		timeBegin = timeEnd;
+
+		// if the last circle was clicked
 		if (index >= points.length) {
 			endTest();
-			addResults(times, accuracy, errors);
+			addResults(times, accuracy, distance, errors);
+
+		// otherwise, keep clicking
 		} else {
 			circle = points[index];
 			makeCircle(circle[0], circle[1]);
 		}
+	// if click was outside a circle
 	} else {
-		errors.count++;
-		errors.distance.push(distance - radius);
+		errors.push(difference - radius);
 	}
 });
 
