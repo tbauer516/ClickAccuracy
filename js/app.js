@@ -37,6 +37,7 @@ var database = firebase.database();
 var databaseRef = database.ref();
 // Create a child reference
 var resultsRef = databaseRef.child('results');
+var countsRef = databaseRef.child('counts');
 
 $('#login-form').on('submit', function(event) {
 
@@ -85,17 +86,18 @@ var addResults = function(resultData, accuracyData, errorData) {
 
 	var newResultKey = resultsRef.push().key;
 
-	resultsRef.child(username).once('value').then(function(snapshot) {
-		var size = snapshot.numChildren();
+	countsRef.child(username).once('value').then(function(snapshot) {
+		var size = snapshot.val();
 		
 		var updates = {};
 		updates[username + '/' + size] = {time: resultData, accuracy: accuracyData, errors: errorData};
+		updateCount(1);
 		return resultsRef.update(updates);
 	});
 }
 
-function updateCounter(amt) {
-	databseRef.child('/counts/' + username).transaction(function(currentValue) {
+function updateCount(amt) {
+	countsRef.child(username).transaction(function(currentValue) {
 		currentValue || (currentValue === 0); // can be null
 		return currentValue + amt;
 	});
@@ -191,7 +193,7 @@ var errors = {count: 0, distance: []};
 var timeBegin;
 var timeEnd;
 
-canvas.click(function(e) {
+canvas.mousedown(function(e) {
 	var x = e.pageX - parseInt(canvas.css('margin-left'));
 	var y = e.pageY - parseInt(canvas.css('margin-top'));
 	var distance = Math.sqrt(Math.pow(x - xscale(circle[0]), 2) + Math.pow(y - yscale(circle[1]), 2));
