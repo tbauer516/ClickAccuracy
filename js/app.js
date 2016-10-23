@@ -31,7 +31,8 @@ var bounds = {
 	y: parseInt(canvas.attr('height'))
 };
 
-var radius = 30;
+var radius = 4; //radius as a percentage of diagonal length
+var oldRadius = 30;
 
 var database = firebase.database();
 var databaseRef = database.ref();
@@ -103,20 +104,34 @@ function updateCount(amt) {
 	});
 }
 
+var radiusscale = function(r) {
+	if (r > 0 && r < 100) {
+		return (r * Math.sqrt((bounds.x * bounds.x) + (bounds.y * bounds.y)) / 100) / 2;
+	}
+	return undefined;
+}
+
+var radiusscale2 = function(r) {
+	if (r > 0 && r < 100) {
+		return (r / 100) * (Math.sqrt(bounds.x * bounds.y / Math.PI));
+	}
+}
+
+radius = radiusscale2(4.5);
+// radius = oldRadius;
+
 var xscale = function(x) {
 	if (x >= 0 && x <= 100) {
 		return (x / 100) * (bounds.x - (2 * radius)) + radius;
-	} else {
-		return undefined;
 	}
+	return undefined;
 }
 
 var yscale = function(y) {
 	if (y >= 0 && y <= 100) {
 		return (y / 100) * (bounds.y - (2 * radius)) + radius;
-	} else {
-		return undefined;
 	}
+	return undefined;
 }
 
 var makeCircle = function(x, y) {
@@ -147,7 +162,7 @@ var beginTest = function() {
 	ctx.textAlign = 'center'
 	ctx.strokeStyle = '#000000';
 	ctx.fillStyle = '#000000';
-	ctx.font = '160px Georgia';
+	ctx.font = xscale(7) + 'px Georgia';
 	ctx.fillText('Press Below to Begin', xscale(50), yscale(30));
 	makeCircle(50, 50);
 }
@@ -161,7 +176,7 @@ var endTest = function() {
 	ctx.textAlign = 'center'
 	ctx.strokeStyle = '#000000';
 	ctx.fillStyle = '#000000';
-	ctx.font = '160px Georgia';
+	ctx.font = xscale(7) + 'px Georgia';
 	ctx.fillText('Thank You For', xscale(50), yscale(30));
 	ctx.fillText('Participating', xscale(50), yscale(60));
 }

@@ -65,7 +65,6 @@ var getData = function() {
 	// });
 	var data = [];
 	resultsRef.child(username).on('child_added', function(snapshot) {
-		console.log(snapshot.val());
 		data.push(snapshot.val());
 		processData(data);
 	});
@@ -80,26 +79,34 @@ var processData = function(data) {
 		var accuracyValues = [];
 		var distanceValues = [];
 		var errorValues = [];
+		var timeOverDistance = [];
+		var accuracyOverDistance = [];
 		for (var j = 0; j < data[i].time.length; j++) {
-			var item = {
+			var timeItem = {
 				click: j + 1,
 				time: data[i].time[j]
 			};
-			timeValues.push(item);
-		}
-		for (var j = 0; j < data[i].accuracy.length; j++) {
-			var item = {
+			var accuracyItem = {
 				click: j + 1,
 				accuracy: data[i].accuracy[j]
 			};
-			accuracyValues.push(item);
-		}
-		for (var j = 0; j < data[i].distance.length; j++) {
-			var item = {
+			var distanceItem = {
 				click: j + 1,
 				distance: data[i].distance[j]
 			};
-			distanceValues.push(item);
+			var timeDistanceItem = {
+				click: j + 1,
+				timeOverDistance: data[i].time[j] / data[i].distance[j]
+			};
+			var accuracyDistanceItem = {
+				click: j + 1,
+				accuracyOverDistance: data[i].accuracy[j] / data[i].distance[j]
+			};
+			timeValues.push(timeItem);
+			accuracyValues.push(accuracyItem);
+			distanceValues.push(distanceItem);
+			timeOverDistance.push(timeDistanceItem);
+			accuracyOverDistance.push(accuracyDistanceItem);
 		}
 		if (data[i].errors != undefined) {
 			for (var j = 0; j < data[i].errors.length; j++) {
@@ -114,12 +121,16 @@ var processData = function(data) {
 			id: i,
 			timeData: timeValues,
 			accuracyData: accuracyValues,
-			errorData: errorValues
+			errorData: errorValues,
+			timeDistance: timeOverDistance,
+			accuracyDistance: accuracyOverDistance
 		});
 	}
 
 	lineGraph('#chart1', newData, 'timeData', 'click', 'time', 'Time in milliseconds between clicks');
 	lineGraph('#chart2', newData, 'accuracyData', 'click', 'accuracy', 'Distance in pixels from the center of target');
+	lineGraph('#chart3', newData, 'timeDistance', 'click', 'timeOverDistance', 'Time in ms / Distance in px');
+	lineGraph('#chart4', newData, 'accuracyDistance', 'click', 'accuracyOverDistance', 'Accuracy in px / Distance in px');
 
 }
 
