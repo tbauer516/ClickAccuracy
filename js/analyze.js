@@ -81,6 +81,7 @@ var processData = function(data) {
 		var errorValues = [];
 		var timeOverDistance = [];
 		var accuracyOverDistance = [];
+		var errorOverDistance = [];
 		for (var j = 0; j < data[i].time.length; j++) {
 			var timeItem = {
 				click: j + 1,
@@ -110,20 +111,24 @@ var processData = function(data) {
 		}
 		if (data[i].errors != undefined) {
 			for (var j = 0; j < data[i].errors.length; j++) {
-				var item = {
-					click: j + 1,
-					error: data[i].errors[j]
+				var clickNumber = data[i].errors[j].click;
+				var errorDistanceItem = {
+					click: clickNumber,
+					errorOverDistance: data[i].errors[j].error / data[i].distance[clickNumber]
 				};
-				errorValues.push(item);
+				errorValues.push(data[i].errors[j]);
+				errorOverDistance.push(errorDistanceItem);
 			}	
 		}
 		newData.push({
 			id: i,
 			timeData: timeValues,
 			accuracyData: accuracyValues,
+			distanceData: distanceValues,
 			errorData: errorValues,
 			timeDistance: timeOverDistance,
-			accuracyDistance: accuracyOverDistance
+			accuracyDistance: accuracyOverDistance,
+			errorDistance: errorOverDistance
 		});
 	}
 

@@ -88,7 +88,7 @@ var addResults = function(resultData, accuracyData, distanceData, errorData) {
 	var newResultKey = resultsRef.push().key;
 
 	countsRef.child(username).once('value').then(function(snapshot) {
-		var size = snapshot.val();
+		var size = snapshot.val() || 0;
 		
 		var updates = {};
 		updates[username + '/' + size] = {time: resultData, accuracy: accuracyData, distance: distanceData, errors: errorData};
@@ -247,7 +247,11 @@ canvas.mousedown(function(e) {
 		}
 	// if click was outside a circle
 	} else {
-		errors.push(difference - radius);
+		var item = {
+			click: times.length,
+			error: distFromCenter - radius
+		};
+		errors.push(item);
 	}
 });
 
