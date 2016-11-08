@@ -48,7 +48,44 @@
                         <div class="modal-footer">
                             <!-- <a href="/create"><button type="button" class="btn btn-secondary">Create Account</button></a>
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Do not record results</button> -->
-                            <input type="submit" class="btn btn-primary" placeholder="Login">
+                            <input id="login-submit" type="submit" class="btn btn-primary" placeholder="Login">
+                        </div>
+                    </form>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <div id="survey" class="modal fade">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <!-- <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button> -->
+                    <h4 class="modal-title">Please Let Us Know A Little Info About You:</h4>
+                </div>
+                <div class="modal-body">
+                    <form name="survey" id="survey-form" autocomplete="off" onsubmit="event.preventDefault(); tryLogin();">
+                        <h4>How well do you think you did? (1 = Bad, 10 = Great)</h4>
+                        <br>
+                        <select id="performance" class="form-control">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                        </select>
+                        <br>
+                        <div class="modal-footer">
+                            <!-- <a href="/create"><button type="button" class="btn btn-secondary">Create Account</button></a>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Do not record results</button> -->
+                            <input id="survey-submit" type="submit" class="btn btn-primary" placeholder="Submit">
                         </div>
                     </form>
                 </div>

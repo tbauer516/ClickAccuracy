@@ -2,6 +2,7 @@
 
 var username = '';
 
+var options;
 $(document).ready(function() {
 	firebase.auth().onAuthStateChanged(function(user) {
 		if (user) {
@@ -9,7 +10,7 @@ $(document).ready(function() {
 			username = user.email.split('@')[0];
 		} else {
 			// No user is signed in.
-			var options = {
+			options = {
 				backdrop: 'static',
 				keyboard: false,
 				focus: true,
@@ -53,6 +54,24 @@ $('#login-form').on('submit', function(event) {
 
 });
 
+$('#survey-form').on('submit', function(event) {
+
+	var response = $('#survey select').val();
+	console.log(response);
+	addResults(times, accuracy, distance, errors, response);
+
+	$('#survey').modal('hide');
+
+	//don't submit as usual!
+   event.preventDefault();    //current standard
+   event.returnValue = false; //some older browsers
+   return false;              //most older browsers
+});
+
+var openSurvey = function() {
+	$('#survey').modal(options);
+}
+
 var tryLogin = function() {
 	return false;
 }
@@ -83,7 +102,7 @@ var logoutAccount = function() {
 	});
 }
 
-var addResults = function(resultData, accuracyData, distanceData, errorData) {
+var addResults = function(resultData, accuracyData, distanceData, errorData, responseData, reinforcementType) {
 
 	var newResultKey = resultsRef.push().key;
 
@@ -91,7 +110,7 @@ var addResults = function(resultData, accuracyData, distanceData, errorData) {
 		var size = snapshot.val() || 0;
 		
 		var updates = {};
-		updates[username + '/' + size] = {time: resultData, accuracy: accuracyData, distance: distanceData, errors: errorData};
+		updates[username + '/' + size] = {time: resultData, accuracy: accuracyData, distance: distanceData, errors: errorData, response: responseData};
 		updateCount(1);
 		return resultsRef.update(updates);
 	});
@@ -141,12 +160,12 @@ var makeCircle = function(x, y) {
 	ctx.strokeStyle = '#000000';
 	ctx.fillStyle = '#000000';
 	ctx.fill();
-	ctx.beginPath();
-	ctx.arc(xscale(x), yscale(y), radius / 10, 0, 2 * Math.PI);
-	ctx.closePath();
-	ctx.strokeStyle = '#FF0000';
-	ctx.fillStyle = '#FF0000';
-	ctx.fill();
+	// ctx.beginPath();
+	// ctx.arc(xscale(x), yscale(y), radius / 10, 0, 2 * Math.PI);
+	// ctx.closePath();
+	// ctx.strokeStyle = '#FF0000';
+	// ctx.fillStyle = '#FF0000';
+	// ctx.fill();
 }
 
 var removeCircle = function(x, y) {
@@ -238,7 +257,7 @@ canvas.mousedown(function(e) {
 		// if the last circle was clicked
 		if (index >= points.length) {
 			endTest();
-			addResults(times, accuracy, distance, errors);
+			openSurvey();
 
 		// otherwise, keep clicking
 		} else {
