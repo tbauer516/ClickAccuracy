@@ -40,6 +40,10 @@ $('#login-form').on('submit', function(event) {
 
 });
 
+var tryLogin = function() {
+	return false;
+}
+
 var loginAccount = function(email, password) {
 	firebase.auth().signInWithEmailAndPassword(email + '@omg.com', password).then(function(data) {
 		$('#login').modal('hide');
