@@ -8,6 +8,10 @@ canvas {
 	margin-left: 50px;
 }
 
+.hide {
+	display: none;
+}
+
 .line {
 	fill: none;
 	stroke: black;

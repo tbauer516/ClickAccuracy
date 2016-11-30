@@ -68,8 +68,17 @@ var getData = function() {
 	// 	processData(data);
 	// });
 	var data = [];
-	resultsRef.child(username).on('child_added', function(snapshot) {
-		data.push(snapshot.val());
+	resultsRef.child('positive').on('child_added', function(snapshot) {
+		var temp = snapshot.val();
+		temp.positive = true;
+		data.push(temp);
+		processData(data);
+	});
+
+	resultsRef.child('negative').on('child_added', function(snapshot) {
+		var temp = snapshot.val();
+		temp.positive = false;
+		data.push(temp);
 		processData(data);
 	});
 }
@@ -77,6 +86,8 @@ var getData = function() {
 var processData = function(data) {
 
 	var newData = [];
+	var positiveData = [];
+	var negativeData = [];
 	
 	for (var i = 0; i < data.length; i++) {
 		var timeValues = [];
@@ -124,7 +135,13 @@ var processData = function(data) {
 				errorOverDistance.push(errorDistanceItem);
 			}	
 		}
-		newData.push({
+		var positive;
+		if (data[i].positive) {
+			positive = 1;
+		} else {
+			positive = 0;
+		}
+		var newItem = {
 			id: i,
 			timeData: timeValues,
 			accuracyData: accuracyValues,
@@ -132,14 +149,60 @@ var processData = function(data) {
 			errorData: errorValues,
 			timeDistance: timeOverDistance,
 			accuracyDistance: accuracyOverDistance,
-			errorDistance: errorOverDistance
-		});
+			errorDistance: errorOverDistance,
+			positive: positive
+		};
+		newData.push(newItem);
+		if (newItem.positive === 1) {
+			positiveData.push(newItem);
+		} else {
+			negativeData.push(newItem);
+		}
 	}
+
+	var means = [];
+	
+	var posMeans = [];
+	for (var i = 0; i < positiveData.length; i++) {
+		for (var j = 0; j < positiveData[i].timeDistance.length; j++) {
+			if (posMeans[j] == undefined) {
+				posMeans[j] = {click: j + 1, value: 0};
+			}
+			posMeans[j].value += positiveData[i].timeDistance[j].timeOverDistance;
+		}
+	}
+	if (positiveData[0] != undefined) {
+		for (var j = 0; j < positiveData[0].timeDistance.length; j++) {
+			posMeans[j].value /= positiveData.length;
+		}
+	}
+
+	var negMeans = [];
+	for (var i = 0; i < negativeData.length; i++) {
+		for (var j = 0; j < negativeData[i].timeDistance.length; j++) {
+			if (negMeans[j] == undefined) {
+				negMeans[j] = {click: j + 1, value: 0};
+			}
+			negMeans[j].value += negativeData[i].timeDistance[j].timeOverDistance;
+		}
+	}
+	if (negativeData[0] != undefined) {
+		for (var j = 0; j < negativeData[0].timeDistance.length; j++) {
+			negMeans[j].value /= negativeData.length;
+		}
+	}
+
+	means.push({'timeDistance': posMeans, 'positive': 1, 'id': 0});
+	means.push({'timeDistance': negMeans, 'positive': 0, 'id': 1});
+
+	console.log(means);
 
 	lineGraph('#chart1', newData, 'timeData', 'click', 'time', 'Time in milliseconds between clicks');
 	lineGraph('#chart2', newData, 'accuracyData', 'click', 'accuracy', 'Distance in pixels from the center of target');
 	lineGraph('#chart3', newData, 'timeDistance', 'click', 'timeOverDistance', 'Time in ms / Distance in px');
 	lineGraph('#chart4', newData, 'accuracyDistance', 'click', 'accuracyOverDistance', 'Accuracy in px / Distance in px');
+
+	lineGraph('#chart5', means, 'timeDistance', 'click', 'value', 'Time in ms / Distance in px');
 
 }
 
@@ -192,8 +255,12 @@ var lineGraph = function(chartID, data, dataset, x, y, ylabel) {
 		.domain([0, data.length - 1])//.domain(data.map(function(s) { return s.id; }))
 		.range([0, 0.85]);
 
+	colorscale = d3.scaleLinear()
+		.domain([0, 1])
+		.range([0, 0.85]);
+
 	var getColor = function(d) {
-		return d3.interpolateRainbow(colorscale(d));
+		return d3.interpolateRainbow(colorscale(data[d].positive));
 	}
 
 	var line = d3.line()
@@ -202,11 +269,43 @@ var lineGraph = function(chartID, data, dataset, x, y, ylabel) {
     	.y(function(d) { return yscale(d[y]); });
 
 	var legend = svg.append('g')
-		.attr('class', 'legend')
-		.attr('x', width - 100)
-		.attr('y', 100)
-		.attr('height', 100)
-		.attr('width', 100);
+		.attr('class', 'legend hide')
+		.attr('x', '67%')
+		.attr('y', '5%')
+		.attr('height', '95%')
+		.attr('width', '33%');
+
+	var background = legend.append('rect')
+		.attr('class', 'legend hide')
+		.attr('x', '66%')
+		.attr('y', '5%')
+		.attr('height', '95%')
+		.attr('width', '34%')
+		.style('fill', '#FFFFFF');
+
+	var toggleG = svg.append('g');
+
+	var toggleRect = toggleG.append('rect')
+		.attr('x', '80%')
+		.attr('y', 0)
+		.attr('height', '5%')
+		.attr('width', '20%')
+		.attr('fill', '#000000')
+		.style('cursor', 'pointer')
+		.on('click', function() {
+			$('.legend').toggleClass('hide');
+		});
+	toggleG.append('text')
+		.text('Toggle Legend')
+		.style('fill', '#FFFFFF')
+		.style('cursor', 'pointer')
+		.attr('x', '81%')
+		.attr('y', '3%')
+		.attr('height', '5%')
+		.attr('width', '19%')
+		.on('click', function() {
+			$('.legend').toggleClass('hide');
+		});
 
 	legend.selectAll('g')
 		.data(data)
@@ -228,17 +327,17 @@ var lineGraph = function(chartID, data, dataset, x, y, ylabel) {
 	g.append('text')
 		.attr('x', xpos + 15)
 		.attr('y', i * ypos + 10 + yoffset)
-		.attr('height',30)
-		.attr('width',100)
+		.attr('height', 30)
+		.attr('width', 100)
 		.style('fill', function(d) {
 			return getColor(d.id);
 		})
 		.text(function(d) {
-			return 'Mean: ' + d3.mean(d[dataset], function(d) {
+			return 'Mean: ' + (d3.mean(d[dataset], function(d) {
 				return d[y];
-			}).toFixed(2) + ' | STD: ' + d3.deviation(d[dataset], function(d) {
+			}) || 0).toFixed(2) + ' | STD: ' + (d3.deviation(d[dataset], function(d) {
 				return d[y];
-			}).toFixed(2);
+			}) || 0).toFixed(2);
 		});
 
 	});
