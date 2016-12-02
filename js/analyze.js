@@ -62,6 +62,89 @@ var logoutAccount = function() {
 	});
 }
 
+var downloadCsv = function() {
+
+	var data = [];
+
+	var allQueries = Promise.all([
+		new Promise(function(resolve, reject) {
+			resultsRef.child('positive').once('value', function(snapshot) {
+				var temp = snapshot.val();
+				temp.map(function(d) {
+					d['positive'] = true;
+					data.push(d);
+					return d;
+				});
+				resolve();
+			});	
+		}),
+		new Promise(function(resolve, reject) {
+			resultsRef.child('negative').once('value', function(snapshot) {
+				var temp = snapshot.val();
+				temp.map(function(d) {
+					d['positive'] = false;
+					data.push(d);
+					return d;
+				});
+				resolve();
+			});
+		})
+	]);
+
+	allQueries.then(function() {
+		// all three are finished
+
+		var wideData = [];
+		wideData[0] = ['id', 'positive', 'self_opinion'];
+		for (var i = 0; i < data[0].time.length; i++) {
+			wideData[0].push('target_' + (i + 1));
+		}
+		for (var i = 0; i < data.length; i++) {
+			var row = [];
+			row.push(i);
+			row.push(data[i].positive);
+			row.push(data[i].response);
+			for (var j = 0; j < data[i].time.length; j++) {
+				row.push(data[i].time[j]);
+			}
+			wideData.push(row);
+		}
+
+		var wideDataString = '';
+		for (var i = 0; i < wideData.length; i++) {
+			for (var j = 0; j < wideData[i].length; j++) {
+				var toAdd = wideData[i][j];
+				if (j != 0) {
+					toAdd = ',' + toAdd;
+				}
+				wideDataString += toAdd;
+			}
+			if (i != wideData.length - 1) {
+				wideDataString += '\n';
+			}
+		}
+
+		var csvContent = "data:text/csv;charset=utf-8,";
+		csvContent += wideDataString; 
+
+		var encodedUri = encodeURI(csvContent);
+		var link = $('<a></a>');
+		link.attr('href', encodedUri);
+		link.attr("download", "data.csv");
+		$('body').append(link);
+
+		link[0].click(); // This will download the data file named "my_data.csv".
+
+		link.remove();
+
+	}, function(error) {
+		// A query failed
+		console.log('failed');
+		console.log(error);
+	});
+
+}
+
 var getData = function() {
 	// resultsRef.child(username).once('value').then(function(snapshot) {
 	// 	data = snapshot.val();
@@ -69,7 +152,7 @@ var getData = function() {
 	// });
 	var data = [];
 	resultsRef.child('positive').on('child_added', function(snapshot) {
-		var temp = snapshot.val();
+		var temp = snapshot.val();	
 		temp.positive = true;
 		data.push(temp);
 		processData(data);
@@ -194,8 +277,6 @@ var processData = function(data) {
 
 	means.push({'timeDistance': posMeans, 'positive': 1, 'id': 0});
 	means.push({'timeDistance': negMeans, 'positive': 0, 'id': 1});
-
-	console.log(means);
 
 	lineGraph('#chart1', newData, 'timeData', 'click', 'time', 'Time in milliseconds between clicks');
 	lineGraph('#chart2', newData, 'accuracyData', 'click', 'accuracy', 'Distance in pixels from the center of target');
